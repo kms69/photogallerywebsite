@@ -44,4 +44,30 @@ class PostController extends Controller
         return redirect()->route('posts.index')
             ->with('success','Post created successfully.');
     }
+    public function update(Request $request, Post $post)
+    {
+        $request->validate([
+            'title' => 'required',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'publish_date' => 'required|string|max:50',
+            'body' => 'required|text|max',
+            'category_id' => 'required|exists:category,id',
+        ]);
+
+        $input = $request->all();
+
+        if ($image = $request->file('image')) {
+            $destinationPath = 'image/';
+            $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
+            $image->move($destinationPath, $profileImage);
+            $input['image'] = "$profileImage";
+        }else{
+            unset($input['image']);
+        }
+
+        $post->update($input);
+
+        return redirect()->route('posts.index')
+            ->with('success','Post updated successfully');
+    }
 }
