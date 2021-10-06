@@ -1,19 +1,29 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\API\v1;
 
-use App\Models\Image;
+use App\Http\Controllers\Controller;
+use App\Models\Album;
 use Illuminate\Http\Request;
 
-class ImageController extends Controller
+class AlbumController extends Controller
 {
+
     public function index()
     {
-        $image = Image::get();
-        return view('image-gallery', compact('image'));
+        $album = Album::get();
+        return view('album.index', compact('album'));
     }
+    public function get($id)
+    {
+        $album = Album::with('images')->find($id);
+        return view('album',compact('album'));
 
-
+    }
+    public function create()
+    {
+        return view('createalbum');
+    }
     public function upload(Request $request)
     {
         $this->validate($request, [
@@ -32,7 +42,7 @@ class ImageController extends Controller
             $image->move($destinationPath, $profileImage);
             $input['image'] = "$profileImage";
         }
-        Image::create($input);
+        Album::create($input);
 
 
         return back()
@@ -40,9 +50,9 @@ class ImageController extends Controller
     }
 
 
-    public function destroy(Image $image)
+    public function destroy(Album $album)
     {
-        $image->delete();
+        $album->delete();
         return back()
             ->with('success', 'Image removed successfully.');
     }
