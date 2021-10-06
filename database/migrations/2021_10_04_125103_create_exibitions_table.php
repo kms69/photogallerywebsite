@@ -13,7 +13,7 @@ class CreateExibitionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('exhibitions', function (Blueprint $table) {
+        Schema::create('exibitions', function (Blueprint $table) {
             $table->id();
             $table->binary('cover_image');
             $table->string('exhibitions_title');
