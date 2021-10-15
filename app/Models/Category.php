@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Category extends Model
 {
     use HasFactory;
-    protected $fillable = ['parent_id','category'];
+    protected $fillable = ['name'];
     public function post()
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(Post::class,'category_id');
     }
 }
