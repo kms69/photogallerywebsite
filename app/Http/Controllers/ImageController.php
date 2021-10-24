@@ -1,50 +1,115 @@
 <?php
 
-namespace App\Http\Controllers\API\v1;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Album;
 use App\Models\Image;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class ImageController extends Controller
 {
     public function index()
     {
-        $image = Image::get();
-        return view('image.gallery', compact('image'));
+        $images = Image::all();
+
+        return view('admin.images.index', compact('images'));
+    }
+//    public function get($id)
+//    {
+//        $album = Album::with('images')->find($id);
+//        return view('album',compact('album'));
+//
+//    }
+    public function edit($id)
+    {
+
+        $image =Image::findOrFail($id);
+
+        return view('admin.images.edit', compact(['image']));
+    }
+    public function create()
+    {
+        $albums=Album::all();
+        return view('admin.images.create',compact('albums'));
     }
 
 
-    public function upload(Request $request)
+    public function store(Request $request)
     {
         $this->validate($request, [
-            'title' => 'required',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'description' => 'required|string|max:225',
+
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'album_id' => 'required|exists:albums,id',
+
 
         ]);
 
-        $input = $request->all();
+        $name = $request->file('photo')->getClientOriginalName();
 
-        if ($image = $request->file('image')) {
-            $destinationPath = 'gallery_image/';
-            $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-            $image->move($destinationPath, $profileImage);
-            $input['image'] = "$profileImage";
-        }
-        Image::create($input);
+        $path = $request->file('photo')->storeAs('public/images', $name);
 
 
-        return back()
-            ->with('success', 'Image Uploaded successfully.');
+        $image= new Image();
+        $image->album_id = $request->input('album_id');
+
+
+        $image->photo = $name;
+
+        $image->save();
+        return redirect()->route('images.index')
+            ->with('success', 'images created successfully.');
     }
+//    public function update(Request $request, Album $album)
+//    {
+//        $this->validate($request, [
+//            'title' => 'required|string|max:50',
+//            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+//            'body' => 'required|string|max:225',
+//
+//
+//        ]);
+//
+//        if ($request->file('image') != '') {
+//            $path = public_path("\storage\album\\") . $album->image;
+//
+//
+//            if (File::exists($path)) {
+//                File::delete($path);
+//            }
+//
+//
+//            $name = $request->file('image')->getClientOriginalName();
+//            $path = $request->file('image')->storeAs('public/album', $name);
+//        } else {
+//            $name = $album->image;
+//        }
+//
+//        $album->image = $name;
+//        $album->title = $request->input('title');
+//        $album->body = $request->input('body');
+//
+//
+//
+//
+//
+//        $album->update();
+//        return redirect()->route('album.index')
+//            ->with('success', 'album created successfully.');
+//    }
 
 
-    public function destroy(Image $image)
+    public function destroy($id)
     {
-        $image->delete();
-        return back()
-            ->with('success', 'Image removed successfully.');
+        $photo = Image::findOrFail($id);
+
+        $photo->delete($id);
+        $path = public_path("\storage\images\\") . $photo->image;
+        File::delete($path);
+
+
+        return redirect()->route('images.index')
+            ->with('success', 'Posts deleted successfully');
     }
 }
