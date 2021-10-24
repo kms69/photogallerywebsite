@@ -1,56 +1,116 @@
 <?php
 
-namespace App\Http\Controllers\API\v1;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exibition;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class ExibitionController extends Controller
 {
     public function index()
     {
-        $exhibitions = Exibition::latest()->paginate(10);
+        $exibitions = Exibition::all();
 
-        return view('posts.index',compact('exhibitions'))
-            ->with('i', (request()->input('page', 1) - 1) * 10);
+        return view('admin.exibition.index',compact('exibitions'));
 
 
     }
+    public function edit($id)
+    {
 
+        $exibition = Exibition::findOrFail($id);
 
-    public function create(Request $request)
+        return view('admin.exibition.edit', compact(['exibition']));
+    }
+    public function create()
+    {
+        return view('admin.exibition.create');
+    }
+
+    public function store(Request $request)
     {
         $this->validate($request, [
-            'exhibitions_title' => 'required|string|max:50',
-            'cover_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'exhibitions_description' => 'required|string|max:225',
-            'exhibitions_date' => 'required|string|max:225',
-            'exhibitions_location' => 'required|string|max:225',
+            'title' => 'required|string|max:50',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'date' => 'required|string|max:225',
+            'location' => 'required|string|max:225',
 
 
         ]);
+        $name = $request->file('image')->getClientOriginalName();
 
-        $input = $request->all();
+        $path = $request->file('image')->storeAs('public/exibition', $name);
 
-        if ($image = $request->file('cover_image')) {
-            $destinationPath = 'exhibitions_image/';
-            $profileImage = date('YmdHis') . "." . $image->getClientOriginalExtension();
-            $image->move($destinationPath, $profileImage);
-            $input['cover_image'] = "$profileImage";
+
+        $exibition= new Exibition();
+        $exibition->title = $request->input('title');
+        $exibition->image = $name;
+        $exibition->date = $request->input('date');
+        $exibition->location = $request->input('location');
+
+
+
+
+
+        $exibition->save();
+        return redirect()->route('exibition.index')
+            ->with('success', 'exibition created successfully.');
+    }
+
+    public function update(Request $request, Exibition $exibition)
+    {
+        $this->validate($request, [
+
+            'title' => 'required|string|max:50',
+            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'date' => 'required|string|max:225',
+            'location' => 'required|string|max:225',
+
+        ]);
+
+        if ($request->file('image') != '') {
+            $path = public_path('\storage\exibition\\') . $exibition->image;
+
+
+            if (File::exists($path)) {
+                File::delete($path);
+            }
+
+
+            $name = $request->file('image')->getClientOriginalName();
+            $path = $request->file('image')->storeAs('public/exibition', $name);
+        } else {
+            $name = $exibition->image;
         }
-        Exibition::create($input);
+
+        $exibition->title = $request->input('title');
+        $exibition->image = $name;
+        $exibition->date = $request->input('date');
+        $exibition->location = $request->input('location');
 
 
-        return back()
-            ->with('success', 'exhibitions made successfully.');
+
+
+
+        $exibition->update();
+        return redirect()->route('exibition.index')
+            ->with('success', 'exibition created successfully.');
     }
 
 
-    public function destroy(Exibition $exhibition)
+
+    public function destroy($id)
     {
-        $exhibition->delete();
-        return back()
-            ->with('success', 'Exhibition removed successfully.');
+        $exibition = Exibition::findOrFail($id);
+
+        $exibition->delete($id);
+        $path = public_path("\storage\exibition\\") . $exibition->image;
+        File::delete($path);
+
+
+        return redirect()->route('exibition.index')
+            ->with('success', 'Posts deleted successfully');
     }
 }
