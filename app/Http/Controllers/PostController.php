@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Post;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-
 use Symfony\Component\HttpFoundation\Response;
+
+
 
 class PostController extends Controller
 {
@@ -23,6 +24,61 @@ class PostController extends Controller
         return view('admin.posts.index', compact('posts', 'categories'));
 
     }
+    public function from()
+    {
+        $posts = Post::all();
+        $categories = Category::with('post')->get();
+
+
+        return view('admin.posts.from', compact('posts', 'categories'));
+
+    }
+    public function news()
+    {
+        $posts = Post::all();
+        $categories = Category::with('post')->get();
+
+
+        return view('admin.posts.news', compact('posts', 'categories'));
+
+    }
+
+    public function interviews()
+    {
+        $posts = Post::all();
+        $categories = Category::with('post')->get();
+
+
+        return view('admin.posts.inteviews', compact('posts', 'categories'));
+
+    }
+    public function reviews()
+    {
+        $posts = Post::all();
+        $categories = Category::with('post')->get();
+
+
+        return view('admin.posts.reviews', compact('posts', 'categories'));
+
+    }
+    public function articlen()
+    {
+        $posts = Post::all();
+        $categories = Category::with('post')->get();
+
+
+        return view('admin.posts.articleen', compact('posts', 'categories'));
+
+    }
+    public function articlep()
+    {
+        $posts = Post::all();
+        $categories = Category::with('post')->get();
+
+
+        return view('admin.posts.articlepe', compact('posts', 'categories'));
+
+    }
 
     public function create()
     {
@@ -32,7 +88,6 @@ class PostController extends Controller
 
     public function edit($id)
     {
-
         $categories = Category::with('post')->get();
         $post = Post::findOrFail($id);
 
@@ -54,7 +109,7 @@ class PostController extends Controller
 
         $name = $request->file('image')->getClientOriginalName();
 
-        $path = $request->file('image')->storeAs('post/images', $name);
+        $path = $request->file('image')->storeAs('public/post/images', $name);
 
 
         $post = new Post;
@@ -86,13 +141,18 @@ class PostController extends Controller
         if ($request->file('image') != '') {
             $path = public_path("\storage\post\images\\") . $post->image;
 
-            if ($post->image != '' && $post->image != null) {
-                $file_old = $path;
-                unlink($file_old);
+
+            if (File::exists($path)) {
+                File::delete($path);
             }
 
+
             $name = $request->file('image')->getClientOriginalName();
-            $path = $request->file('image')->storeAs('post/images', $name);
+            $path = $request->file('image')->storeAs('public/post/images', $name);
+        } else {
+                $name = $post->image;
+            }
+
 
 
             $post->image = $name;
@@ -101,12 +161,15 @@ class PostController extends Controller
             $post->publish_date = $request->input('publish_date');
             $post->category_id = $request->input('category_id');
 
-            $post->update();
-            return redirect()->route('posts.index')
+            $post->save();
+
+        $type=$request->input('name');
+        return redirect()->route('posts.'.$type)
                 ->with('success', 'Post updated successfully');
-        }
+
 
     }
+
 
     public function destroy($id)
     {
@@ -114,10 +177,10 @@ class PostController extends Controller
 
         $post->delete($id);
         $path = public_path("\storage\post\images\\") . $post->image;
-        unlink($path);
-        Session::flash('delete_post', 'مطلب با موفقیت حذف شد');
+        File::delete($path);
 
-        return redirect()->route('posts.index')
-            ->with('success', 'Posts deleted successfully');
+
+//        return redirect()->route('posts.index')
+//            ->with('success', 'Posts deleted successfully');
     }
 }
